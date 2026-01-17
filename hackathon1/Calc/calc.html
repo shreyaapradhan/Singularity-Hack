@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
+
+<style>
+/* ===== YOUR ORIGINAL THEME (UNCHANGED) ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.calculator {
+  background: #020617;
+  width: 320px;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.calculator h3 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+#display {
+  width: 100%;
+  height: 60px;
+  font-size: 24px;
+  text-align: right;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  margin-bottom: 15px;
+  background: #1e293b;
+  color: white;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 10px;
+}
+
+.buttons button {
+  height: 60px;
+  font-size: 20px;
+  border-radius: 8px;
+  border: none;
+  background: #1e293b;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.operator { background: #2563eb !important; }
+.equal { background: #10b981 !important; }
+.clear { background: #ef4444 !important; }
+</style>
+</head>
+
+<body>
+
+<div class="calculator">
+  <h3>Calculator</h3>
+  <input id="display" disabled>
+
+  <div class="buttons">
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button class="operator" onclick="showEmergencyCodes()">+</button>
+
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button class="operator" onclick="press('-')">-</button>
+
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button class="operator" onclick="press('*')">×</button>
+
+    <button onclick="press('0')">0</button>
+    <button class="clear" onclick="clearDisplay()">C</button>
+    <button class="equal" onclick="calculate()">=</button>
+    <button class="operator" onclick="press('/')">÷</button>
+  </div>
+</div>
+
+<script>
+/* ================================
+   🔐 AUTH CHECK
+================================ */
+window.onload = function () {
+  const userId = localStorage.getItem("userId");
+  if (!userId) {
+    window.location.href = "/index.html";
+  }
+};
+
+/* ================================
+   🧮 CALCULATOR LOGIC
+================================ */
+let input = "";
+let sosId = null;
+const display = document.getElementById("display");
+const SECRET_CODE = "991";
+
+function press(v) {
+  input += v;
+  display.value = input;
+}
+
+function clearDisplay() {
+  input = "";
+  display.value = "";
+}
+
+function calculate() {
+  if (input === SECRET_CODE) {
+    display.value = "19";
+    input = "";
+    triggerEmergencyAlert();
+    return;
+  }
+
+  try {
+    display.value = eval(input);
+    input = "";
+  } catch {
+    clearDisplay();
+  }
+}
+
+/* ================================
+   🚨 REAL BACKEND SOS
+================================ */
+function triggerEmergencyAlert() {
+
+  const userId = localStorage.getItem("userId");
+
+  fetch(`/api/sos/trigger/${userId}`, {
+    method: "POST"
+  })
+  .then(res => res.json())
+  .then(sos => {
+    sosId = sos.id;
+    startLocationTracking();
+    showCheckInButton();
+    console.log("🚨 REAL SOS TRIGGERED");
+  });
+}
+
+/* ================================
+   📍 LIVE GPS
+================================ */
+function startLocationTracking() {
+  setInterval(() => {
+    navigator.geolocation.getCurrentPosition(pos => {
+      fetch(`/api/location/${sosId}?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`, {
+        method: "POST"
+      });
+    });
+  }, 5000);
+}
+
+/* ================================
+   ✅ CHECK-IN
+================================ */
+function showCheckInButton() {
+  const btn = document.createElement("button");
+  btn.innerText = "I am Safe";
+  btn.style.position = "fixed";
+  btn.style.bottom = "20px";
+  btn.style.right = "20px";
+  btn.style.padding = "12px";
+  btn.style.background = "#10b981";
+  btn.style.color = "white";
+  btn.style.border = "none";
+  btn.style.borderRadius = "8px";
+
+  btn.onclick = () => {
+    fetch(`/api/risk/check-in/1`, { method: "POST" })
+      .then(() => alert("You are marked safe"));
+  };
+
+  document.body.appendChild(btn);
+}
+
+/* ================================
+   ℹ️ EMERGENCY INFO MODAL
+================================ */
+function showEmergencyCodes() {
+  alert("Emergency Code: 991\nUse only in real danger.");
+}
+</script>
+
+</body>
+</html>
