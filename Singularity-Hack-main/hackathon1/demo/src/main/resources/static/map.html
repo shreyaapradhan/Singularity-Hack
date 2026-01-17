@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live SOS Tracking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+          margin: 0;
+          font-family: Arial;
+          background: #020617;
+          color: white;
+        }
+        #map {
+          height: 100vh;
+          width: 100%;
+        }
+        .status {
+          position: fixed;
+          top: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #dc2626;
+          padding: 10px 16px;
+          border-radius: 8px;
+          font-weight: bold;
+          z-index: 999;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="status">🚨 SOS ACTIVE — LIVE TRACKING</div>
+<div id="map"></div>
+
+<script>
+    let map, marker;
+    let sosId = 1; // TEMP: later dynamic
+
+    function initMap(lat, lng) {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat, lng },
+        zoom: 16
+      });
+
+      marker = new google.maps.Marker({
+        position: { lat, lng },
+        map: map,
+        title: "Live Location"
+      });
+    }
+
+    function sendLocation(lat, lng) {
+      fetch(`http://localhost:8080/api/location/${sosId}?latitude=${lat}&longitude=${lng}`, {
+        method: "POST"
+      });
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) {
+        alert("GPS not supported");
+        return;
+      }
+
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+
+          if (!map) {
+            initMap(lat, lng);
+          } else {
+            marker.setPosition({ lat, lng });
+            map.panTo({ lat, lng });
+          }
+
+          sendLocation(lat, lng);
+        },
+        (err) => alert("Location error"),
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 5000
+        }
+      );
+    }
+
+    startTracking();
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key="></script>
+
+</body>
+</html>
