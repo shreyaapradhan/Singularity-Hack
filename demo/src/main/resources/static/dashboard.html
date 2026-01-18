@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Raahi – Trusted Contact Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: white;
+    }
+
+    .box {
+      background: #020617;
+      padding: 30px;
+      width: 360px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,.4);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: none;
+      background: #1e293b;
+      color: white;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #2563eb;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 10px;
+      color: #94a3b8;
+      cursor: pointer;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body>
+
+<div class="box" id="loginBox">
+  <h2>Trusted Contact Login</h2>
+  <input id="loginMobile" placeholder="Mobile Number" />
+  <input id="loginPassword" type="password" placeholder="Password" />
+  <button onclick="login()">Login</button>
+  <div class="link" onclick="showSignup()">Create Account</div>
+</div>
+
+<div class="box hidden" id="signupBox">
+  <h2>Create Account</h2>
+  <input id="name" placeholder="Full Name" />
+  <input id="mobile" placeholder="Mobile Number" />
+  <input id="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
+  <button onclick="signup()">Sign Up</button>
+  <div class="link" onclick="showLogin()">Back to Login</div>
+</div>
+
+<script>
+  function showSignup() {
+    loginBox.classList.add("hidden");
+    signupBox.classList.remove("hidden");
+  }
+
+  function showLogin() {
+    signupBox.classList.add("hidden");
+    loginBox.classList.remove("hidden");
+  }
+
+  function login() {
+    // DEMO MODE (backend optional)
+    localStorage.setItem("trustedContactData", JSON.stringify({
+      name: "Demo Contact",
+      mobile: loginMobile.value
+    }));
+
+    window.location.href = "user-stream.html";
+  }
+
+  function signup() {
+    alert("Signup successful (demo). Please login.");
+    showLogin();
+  }
+</script>
+
+</body>
+</html>

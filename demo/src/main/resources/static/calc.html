@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .calculator {
+      background: #020617;
+      width: 320px;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    .calculator h3 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    #display {
+      width: 100%;
+      height: 60px;
+      font-size: 24px;
+      text-align: right;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      margin-bottom: 15px;
+      background: #1e293b;
+      color: white;
+      box-sizing: border-box;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 10px;
+    }
+
+    .buttons button {
+      height: 60px;
+      font-size: 20px;
+      border-radius: 8px;
+      border: none;
+      background: #1e293b;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    .buttons button:hover {
+      background: #334155;
+    }
+
+    .buttons button:active {
+      background: #475569;
+    }
+
+    .operator {
+      background: #2563eb !important;
+    }
+
+    .operator:hover {
+      background: #1d4ed8 !important;
+    }
+
+    .equal {
+      background: #10b981 !important;
+    }
+
+    .equal:hover {
+      background: #059669 !important;
+    }
+
+    .clear {
+      background: #ef4444 !important;
+    }
+
+    .clear:hover {
+      background: #dc2626 !important;
+    }
+
+    /* Notification animations */
+    @keyframes slideDown {
+      from {
+        transform: translateX(-50%) translateY(-100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(-50%) translateY(-100px);
+        opacity: 0;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="calculator">
+  <h3>Calculator</h3>
+  <input id="display" type="text" disabled>
+
+  <div class="buttons">
+    <button onclick="press('7')">7</button>
+    <button onclick="press('8')">8</button>
+    <button onclick="press('9')">9</button>
+    <button class="operator" onclick="showEmergencyCodes()">+</button>
+
+    <button onclick="press('4')">4</button>
+    <button onclick="press('5')">5</button>
+    <button onclick="press('6')">6</button>
+    <button class="operator" onclick="press('-')">-</button>
+
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button class="operator" onclick="press('*')">×</button>
+
+    <button onclick="press('0')">0</button>
+    <button class="clear" onclick="clearDisplay()">C</button>
+    <button class="equal" onclick="calculate()">=</button>
+    <button class="operator" onclick="press('/')">÷</button>
+  </div>
+</div>
+
+<script>
+  // Global variables for safety monitoring
+  let safetyCheckTimeout = null;
+  let emergencyTimeout = null;
+  let mediaStream = null;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+
+  // Check if user has completed signup
+  window.onload = function() {
+    const userData = localStorage.getItem("sheSecureUserData");
+    if (!userData) {
+      // Redirect back to signup if no data found
+      window.location.href = "index.html";
+      return;
+    }
+
+    // Start safety monitoring after 5 seconds
+    setTimeout(() => {
+      showUnsafeZoneAlert();
+    }, 5000);
+  };
+
+  /* ---------- CALCULATOR LOGIC ---------- */
+  let input = "";
+  const display = document.getElementById("display");
+  const SECRET_CODE = "991"; // Secret emergency code (9+9+1=19)
+
+  function press(v) {
+    input += v;
+    display.value = input;
+  }
+
+  function calculate() {
+    try {
+      // Check if input matches secret emergency code
+      if (input === SECRET_CODE) {
+        // Calculate sum of digits for confirmation
+        const sum = input.split('').reduce((acc, digit) => acc + parseInt(digit), 0);
+        display.value = sum; // Shows 19 (9+9+1=19)
+        input = "";
+        triggerEmergencyAlert();
+        return;
+      }
+
+      // Normal calculator operation
+      display.value = eval(input);
+      input = "";
+    } catch {
+      reset();
+    }
+  }
+
+  function clearDisplay() {
+    reset();
+  }
+
+  function reset() {
+    input = "";
+    display.value = "";
+  }
+
+  /* ---------- SAFETY ZONE MONITORING ---------- */
+  function showUnsafeZoneAlert() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'unsafeZoneModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease-out;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: #020617;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 2px solid #f59e0b;
+      animation: pulse 2s infinite;
+    `;
+
+    modalContent.innerHTML = `
+      <div style="text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+        <h2 style="color: #f59e0b; margin: 0 0 10px 0;">Unsafe Zone Detected</h2>
+        <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 20px;">
+          You appear to be in an unsafe area. Please stay alert and be cautious.
+        </p>
+        <div style="background: #1e293b; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+          <div style="color: #94a3b8; font-size: 12px;">Safety monitoring is active</div>
+        </div>
+      </div>
+    `;
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Remove alert after 5 seconds and start safety check
+    setTimeout(() => {
+      modal.remove();
+      startSafetyCheck();
+    }, 5000);
+  }
+
+  function startSafetyCheck() {
+    // Wait 10 seconds after unsafe zone alert disappears
+    safetyCheckTimeout = setTimeout(() => {
+      showSafetyCheckPrompt();
+    }, 10000);
+  }
+
+  function showSafetyCheckPrompt() {
+    const modal = document.createElement('div');
+    modal.id = 'safetyCheckModal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease-out;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: #020617;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 2px solid #10b981;
+    `;
+
+    modalContent.innerHTML = `
+      <div style="text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 15px;">🛡️</div>
+        <h2 style="color: #10b981; margin: 0 0 10px 0;">Safety Check</h2>
+        <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 25px;">
+          Have you arrived in a safe area?
+        </p>
+        <div style="display: flex; gap: 10px; flex-direction: column;">
+          <button id="safeBtnYes" style="
+            padding: 15px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+          ">✓ Yes, I'm Safe</button>
+          <button id="safeBtnNo" style="
+            padding: 15px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+          ">✗ No, Still Unsafe</button>
+        </div>
+        <div style="margin-top: 15px; padding: 10px; background: #1e293b; border-radius: 6px;">
+          <div style="color: #94a3b8; font-size: 11px;">
+            ⏱️ No response in 30 seconds will trigger emergency mode
+          </div>
+        </div>
+      </div>
+    `;
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Add button event listeners
+    document.getElementById('safeBtnYes').addEventListener('click', () => {
+      clearTimeout(emergencyTimeout);
+      modal.remove();
+      showNotification('✓ Safety confirmed', '#10b981');
+    });
+
+    document.getElementById('safeBtnNo').addEventListener('click', () => {
+      clearTimeout(emergencyTimeout);
+      modal.remove();
+      triggerEmergencyMode();
+    });
+
+    // Start 30-second countdown - if no response, trigger emergency
+    emergencyTimeout = setTimeout(() => {
+      modal.remove();
+      triggerEmergencyMode();
+    }, 30000);
+  }
+
+  /* ---------- EMERGENCY MODE (Silent Recording) ---------- */
+  async function triggerEmergencyMode() {
+    console.log('🚨 CALCULATION SUCCESSFUL');
+
+    // Show brief silent notification
+    showNotification('Emergency mode activated', '#dc2626', 2000);
+
+    // Start silent audio and video recording
+    try {
+      // Request camera and microphone access
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+
+      // Create media recorder
+      mediaRecorder = new MediaRecorder(mediaStream, {
+        mimeType: 'video/webm;codecs=vp8,opus'
+      });
+
+      recordedChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        console.log('📹 Recording saved:', url);
+
+        // In a real app, this would upload to server
+        // uploadEmergencyRecording(blob);
+      };
+
+      // Start recording
+      mediaRecorder.start();
+      console.log('📹 Recording in progress...');
+
+      // Also trigger emergency alert
+      triggerEmergencyAlert();
+
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      // Still trigger emergency alert even if recording fails
+      triggerEmergencyAlert();
+    }
+  }
+
+  /* ---------- EMERGENCY ALERT ---------- */
+  function triggerEmergencyAlert() {
+    // Get user data
+    const userData = JSON.parse(localStorage.getItem("sheSecureUserData") || "{}");
+
+    // Get current timestamp
+    const timestamp = new Date().toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+
+    // Show notification
+    showNotification('CALCULATION SUCCESSFUL', '#dc2626', 3000);
+
+    // Log emergency alert details
+    console.log("🚨 EMERGENCY ALERT TRIGGERED at " + timestamp);
+    console.log("User:", userData.fullname);
+    console.log("Location:", userData.city + ", " + userData.state);
+    console.log("Mobile:", userData.mobile);
+    console.log("Trusted Contacts:", [userData.contact1, userData.contact2, userData.contact3].filter(c => c));
+    console.log("- Notifying trusted contacts");
+    console.log("- Alerting authorities");
+    console.log("- Capturing location data");
+    console.log("- Recording in progress");
+
+    // Start location tracking
+    startLocationTracking();
+  }
+
+  /* ---------- LOCATION TRACKING ---------- */
+  function startLocationTracking() {
+    if (!navigator.geolocation) {
+      console.error("GPS not supported on this device");
+      return;
+    }
+
+    // Get location every 5 seconds
+    setInterval(() => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          console.log("📍 REAL-TIME LOCATION:", lat, lng);
+
+          // In a real app, send to backend
+          // fetch(`/api/location/update`, {
+          //   method: 'POST',
+          //   body: JSON.stringify({ lat, lng, timestamp: new Date() })
+          // });
+        },
+        (error) => {
+          console.error("Location error:", error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }, 5000);
+  }
+
+  /* ---------- EMERGENCY CODES INFO ---------- */
+  function showEmergencyCodes() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease-out;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: #020617;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      border: 2px solid #2563eb;
+    `;
+
+    modalContent.innerHTML = `
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="color: #2563eb; margin: 0 0 5px 0;">🛡️ Emergency Codes</h2>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0;">SheSecure Safety Information</p>
+      </div>
+
+      <div style="background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <h3 style="color: #10b981; margin: 0 0 10px 0; font-size: 16px;">🚨 Primary Alert Code</h3>
+        <div style="color: white; font-size: 18px; font-weight: bold; margin-bottom: 5px;">991</div>
+        <div style="color: #94a3b8; font-size: 13px;">Sum displays: 19 (9+9+1)</div>
+        <div style="color: #cbd5e1; font-size: 12px; margin-top: 8px;">
+          ✓ Alerts all trusted contacts<br>
+          ✓ Notifies local authorities<br>
+          ✓ Shares GPS location<br>
+          ✓ Starts audio/video recording
+        </div>
+      </div>
+
+      <div style="background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <h3 style="color: #f59e0b; margin: 0 0 10px 0; font-size: 16px;">📞 Other Emergency Numbers</h3>
+        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.8;">
+          <strong style="color: white;">100</strong> - Police<br>
+          <strong style="color: white;">112</strong> - National Emergency (All services)<br>
+          <strong style="color: white;">1091</strong> - Women Helpline<br>
+          <strong style="color: white;">181</strong> - Women in Distress<br>
+          <strong style="color: white;">108</strong> - Ambulance
+        </div>
+      </div>
+
+      <div style="background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <h3 style="color: #ec4899; margin: 0 0 10px 0; font-size: 16px;">💡 How to Use</h3>
+        <div style="color: #cbd5e1; font-size: 12px; line-height: 1.6;">
+          1. In emergency, type <strong style="color: white;">991</strong><br>
+          2. Press <strong style="color: white;">=</strong> button<br>
+          3. You'll see <strong style="color: white;">19</strong> on display<br>
+          4. Alert notification will appear briefly<br>
+          5. Help is automatically notified
+        </div>
+      </div>
+
+      <div style="text-align: center; padding: 10px; background: #dc2626; border-radius: 6px; margin-bottom: 15px;">
+        <div style="font-size: 12px; font-weight: bold;">⚠️ USE ONLY IN REAL EMERGENCIES</div>
+      </div>
+
+      <button onclick="this.parentElement.parentElement.remove()" style="
+        width: 100%;
+        padding: 12px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+      ">Close</button>
+    `;
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  /* ---------- UTILITY FUNCTIONS ---------- */
+  function showNotification(message, color, duration = 3000) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: ${color};
+      color: white;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 10000;
+      font-size: 14px;
+      text-align: center;
+      animation: slideDown 0.3s ease-out;
+      font-weight: bold;
+    `;
+
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.style.animation = 'slideUp 0.3s ease-in';
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, duration);
+  }
+</script>
+
+</body>
+</html>

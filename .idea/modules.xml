@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< HEAD
       <module fileurl="file://$PROJECT_DIR$/.idea/Singularity-Hack-main.iml" filepath="$PROJECT_DIR$/.idea/Singularity-Hack-main.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/hackathon1.iml" filepath="$PROJECT_DIR$/.idea/hackathon1.iml" />
+>>>>>>> eae16db (Final Commit)
     </modules>
   </component>
 </project>
