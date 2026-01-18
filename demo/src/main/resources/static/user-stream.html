@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Raahi – Emergency Stream</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    header {
+      background: #dc2626;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h3 {
+      margin: 0;
+    }
+
+    .container {
+      padding: 20px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .card {
+      background: #020617;
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    #map {
+      height: 280px;
+      border-radius: 10px;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 10px;
+      background: black;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 10px 14px;
+      background: #2563eb;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h3>🚨 Emergency Active</h3>
+  <button onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+
+  <!-- LOCATION -->
+  <div class="card">
+    <h4>📍 User's Live Location</h4>
+    <div id="map"></div>
+  </div>
+
+  <!-- CAMERA -->
+  <div class="card">
+    <h4>📹 User's Live Camera</h4>
+    <video id="video" autoplay muted></video>
+  </div>
+
+  <!-- AUDIO -->
+  <div class="card">
+    <h4>🎤 User's Live Audio</h4>
+    <audio id="audio" controls autoplay></audio>
+  </div>
+
+</div>
+
+<script>
+  /* ---------- LOGOUT ---------- */
+  function logout() {
+    localStorage.clear();
+    window.location.href = "index.html";
+  }
+
+  /* ---------- MAP (EXACT STRUCTURE, KC COLLEGE THANE) ---------- */
+  var map = L.map('map').setView([19.1969, 72.9729], 16);
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  L.marker([19.1969, 72.9729]).addTo(map)
+    .bindPopup(
+      '📍 <b>KC College, Thane</b><br>You are currently here'
+    )
+    .openPopup();
+
+  /* ---------- CAMERA + AUDIO (VIEWER SIDE DEMO) ---------- */
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    .then(stream => {
+      document.getElementById("video").srcObject = stream;
+      document.getElementById("audio").srcObject = stream;
+    })
+    .catch(() => {
+      alert("Camera or microphone permission denied");
+    });
+</script>
+
+</body>
+</html>
